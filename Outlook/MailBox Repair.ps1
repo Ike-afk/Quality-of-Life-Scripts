@@ -20,15 +20,15 @@ Connect-ExchangeOnline -UserPrincipalName "email"
 #    This fixes hidden/corrupted folders where inbound mail disappears.
 
 # Repair folder structure corruption
-New-MailboxRepairRequest -Mailbox "office@email.com" -CorruptionType FolderView,ProvisionedFolder,SearchFolder
+New-MailboxRepairRequest -Mailbox "email.com" -CorruptionType FolderView,ProvisionedFolder,SearchFolder
 
 # Rebuild default mailbox folders (Inbox, Junk, Sent, etc.)
-Set-Mailbox -Identity "office@email.com" -Force
+Set-Mailbox -Identity "email.com" -Force
 
 # 7) DISCONNECT SESSION
 Disconnect-ExchangeOnline -Confirm:$false
 
 # 8) AFTER REPAIR:
 #    - Wait 10–30 minutes
-#    - Log into https://outlook.office.com as office@email.com
+#    - Log into https://outlook.office.com as email.com
 #    - Send a test email from Gmail to confirm it now appears in Inbox/Junk
