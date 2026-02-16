@@ -1,23 +1,42 @@
+<#
+.SYNOPSIS
+Moves all contents from one folder to another.
 
-****fore running this script: Change the folder path location & Destination folder path location****
+.DESCRIPTION
+Prompts for a source folder and a destination folder.
+Moves all files and subfolders from the source to the destination.
 
+If the destination folder does not exist, it will be created.
 
+.CONFIGURATION
+You will be prompted to enter:
+- Source folder path
+- Destination folder path
+#>
 
-$source = Read-Host "Enter the source folder path"
+# ============================================================
+# DO NOT EDIT BELOW THIS LINE
+# ============================================================
 
+# Prompt user for paths
+$Source = Read-Host "Enter the FULL source folder path"
+$Destination = Read-Host "Enter the FULL destination folder path"
 
-$destination = Read-Host "Enter the destination folder path (inside your Google Drive folder)"
-if (-Not (Test-Path $source)) {
+# Validate source
+if (-not (Test-Path $Source)) {
     Write-Host "Source folder does not exist. Exiting." -ForegroundColor Red
-    exit
+    exit 1
 }
-if (-Not (Test-Path $destination)) {
+
+# Create destination if missing
+if (-not (Test-Path $Destination)) {
     Write-Host "Destination folder does not exist. Creating it..." -ForegroundColor Yellow
-    New-Item -ItemType Directory -Path $destination
+    New-Item -ItemType Directory -Path $Destination -Force | Out-Null
 }
+
 try {
-    Move-Item -Path "$source\*" -Destination $destination -Force
+    Move-Item -Path (Join-Path $Source "*") -Destination $Destination -Force -ErrorAction Stop
     Write-Host "Files moved successfully!" -ForegroundColor Green
 } catch {
-    Write-Host "An error occurred: $_" -ForegroundColor Red
+    Write-Host "An error occurred: $($_.Exception.Message)" -ForegroundColor Red
 }

@@ -1,5 +1,7 @@
-#Deletes Windows and user temporary files to free disk space and improve performance.
+# Deletes user temp files
+Remove-Item -Path "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
 
-del /q /f /s %TEMP%\*      <-------------- deletes user temp files
+# Deletes Windows system temp files
+Remove-Item -Path "C:\Windows\Temp\*" -Recurse -Force -ErrorAction SilentlyContinue
 
-del /q /f /s C:\Windows\Temp\*   <----- deltes windows system temp files
+Write-Host "Temporary files cleanup completed."

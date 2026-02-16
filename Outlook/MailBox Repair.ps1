@@ -1,40 +1,58 @@
-# ================================
-# Everett Carpet – Mailbox Repair Notes
-# User: office@everettcarpet.com
-# Admin: ironstacksupport@everettcarpet.onmicrosoft.com
-# Purpose: Fix issue where user can send but not receive email,
-#          even though message trace shows "Delivered".
-# ================================
+<#
+.SYNOPSIS
+Runs Exchange Online mailbox repair for common hidden/corrupted folder issues.
 
-# 1) OPEN WINDOWS POWERSHELL
-#    (Not PowerShell ISE, not CMD. Run as admin if needed.)
+.DESCRIPTION
+Connects to Exchange Online and creates a Mailbox Repair Request for the target mailbox.
+Useful when mail is missing, folders behave oddly, or searches/folder views appear corrupted.
 
-# 2) ALLOW SCRIPT EXECUTION FOR THIS SESSION ONLY
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+.CONFIGURATION
+Edit ONLY the values in the CONFIG SECTION below.
 
-# 3) INSTALL EXCHANGE ONLINE MODULE
-#    (Fixes "module could not be loaded" error)
-Install-Module -Name ExchangeOnlineManagement -Scope CurrentUser -Force -AllowClobber
+.REQUIREMENTS
+- ExchangeOnlineManagement module installed
+- Exchange admin permissions to run mailbox repair
+#>
 
-# 4) IMPORT THE MODULE
-Import-Module ExchangeOnlineManagement
+# ============================================================
+# CONFIG SECTION – EDIT THESE VALUES ONLY
+# ============================================================
 
-# 5) CONNECT TO EXCHANGE ONLINE USING ADMIN ACCOUNT
-Connect-ExchangeOnline -UserPrincipalName "ironstacksupport@everettcarpet.onmicrosoft.com"
+$AdminUPN = "admin@domain.com"     # <-- Put your admin login UPN here
+$MailboxUPN = "user@domain.com"      # <-- Put the mailbox to repair here
 
-# 6) RUN MAILBOX REPAIR
-#    This fixes hidden/corrupted folders where inbound mail disappears.
+# Corruption types to repair:
+# FolderView, ProvisionedFolder, SearchFolder are common safe defaults
+$CorruptionTypes = @("FolderView", "ProvisionedFolder", "SearchFolder")
 
-# Repair folder structure corruption
-New-MailboxRepairRequest -Mailbox "office@everettcarpet.com" -CorruptionType FolderView,ProvisionedFolder,SearchFolder
+# ============================================================
+# DO NOT EDIT BELOW THIS LINE
+# ============================================================
 
-# Rebuild default mailbox folders (Inbox, Junk, Sent, etc.)
-Set-Mailbox -Identity "office@everettcarpet.com" -Force
+Write-Host "Starting Exchange Online mailbox repair..." -ForegroundColor Cyan
+Write-Host "Admin:   $AdminUPN"
+Write-Host "Mailbox: $MailboxUPN" -ForegroundColor Yellow
 
-# 7) DISCONNECT SESSION
-Disconnect-ExchangeOnline -Confirm:$false
+# Verify module exists
+if (-not (Get-Module -ListAvailable -Name ExchangeOnlineManagement)) {
+    Write-Error "ExchangeOnlineManagement module is not installed. Install it first: Install-Module ExchangeOnlineManagement -Scope CurrentUser -Force"
+    exit 1
+}
 
-# 8) AFTER REPAIR:
-#    - Wait 10–30 minutes
-#    - Log into https://outlook.office.com as office@everettcarpet.com
-#    - Send a test email from Gmail to confirm it now appears in Inbox/Junk
+Import-Module ExchangeOnlineManagement -ErrorAction Stop
+
+# Connect
+Connect-ExchangeOnline -UserPrincipalName $AdminUPN
+
+try {
+    # Run mailbox repair
+    New-MailboxRepairRequest -Mailbox $MailboxUPN -CorruptionType $CorruptionTypes | Out-Null
+    Write-Host "Mailbox repair request submitted successfully." -ForegroundColor Green
+    Write-Host "Note: Repairs can take time. Check status in Exchange admin tools if needed." -ForegroundColor Yellow
+} catch {
+    Write-Error "Failed to submit mailbox repair request: $($_.Exception.Message)"
+    exit 1
+} finally {
+    Disconnect-ExchangeOnline -Confirm:$false
+    Write-Host "Disconnected from Exchange Online." -ForegroundColor Cyan
+}
