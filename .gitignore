@@ -1,0 +1,18 @@
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+
+# PowerShell metadata
+*.ps1.xml
+*.psm1.xml
+*.psd1.xml
+
+# VS Code
+.vscode/
+
+# OS files
+Thumbs.db
+.DS_Store
